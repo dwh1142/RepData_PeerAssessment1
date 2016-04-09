@@ -1,21 +1,13 @@
----
-title: 'Reproducible Research: Assignment 1'
-author: "Dan Harris"
-date: "April 2016"
-output:
-  html_document:
-    keep_md: yes
----
+# Reproducible Research: Assignment 1
+Dan Harris  
+April 2016  
 ******
-```{r setoptions, echo=FALSE, warning = FALSE}
-library(knitr)
-opts_chunk$set(echo=TRUE, message = FALSE, warning = FALSE)
 
-```
 
 ###Loading and preprocessing the data
 
-```{r loaddata, results='hide'}
+
+```r
 library(dplyr)
 library(lubridate)
 activity.data <- read.csv(file = "activity.csv", header = T)
@@ -27,7 +19,8 @@ activity.data <- activity.data %>%
 ******  
 ###What is the mean total number of steps taken per day?
   
-```{r plotdata}
+
+```r
 library(ggplot2)
 options(scipen=999)
 
@@ -39,18 +32,23 @@ activity.data.meansteps <- activity.data %>%
 g <- ggplot(data = activity.data.meansteps, aes(Total))
 
 g + geom_histogram(fill = "white", col = "black") + labs(title = "Histogram of the Total Number of Steps Taken Each Day", x = "Steps", y = "Count")
+```
 
+![](PA1_template_files/figure-html/plotdata-1.png)
+
+```r
 mean.steps <- round(mean(activity.data.meansteps$Total))
 median.steps <- round(median(x = activity.data.meansteps$Total))
 rm(activity.data.meansteps)
 ```
 
-The **mean** number is steps taken each day is **`r mean.steps`**. The **median** number of steps taken each day is **`r median.steps`**.  
+The **mean** number is steps taken each day is **10766**. The **median** number of steps taken each day is **10765**.  
 
 ******  
 ###What is the average daily activity pattern?
   
-```{r activitypattern}
+
+```r
 activity.data.dailypattern <- activity.data %>%
   na.omit() %>%
   group_by(interval) %>%
@@ -61,23 +59,27 @@ activity.data.dailypattern <- activity.data %>%
 
   g + geom_line() + 
   labs(title = "Average Daily Activity Pattern", x = "Daily 5-minute Interval", y = "Average Steps")
-``` 
+```
+
+![](PA1_template_files/figure-html/activitypattern-1.png)
 
 ******  
 ###Impute missing values  
   
-```{r missingvalues}
+
+```r
 missing.vals <- sum(!complete.cases(activity.data))
 ```
 
-The total number of **missing values** in the dataset (i.e. the total number of rows with NAs) is **`r missing.vals`**.  
+The total number of **missing values** in the dataset (i.e. the total number of rows with NAs) is **2304**.  
 
 To impute the missing values, let's use a linear model with the following predictor variables.  
 
 1. Interval
 2. Whether the activity occurred on a weekday or on the weekend  
 
-```{r imputesteps}
+
+```r
 library(broom)
 fitted <- lm(steps ~ as.factor(interval) + weekend, data = activity.data, na.action = na.omit)
 
@@ -117,7 +119,8 @@ rm(fitted.df)
 
 After imputing the data, here is a new histogram of the total number of steps taken each day:  
 
-```{r imputedhist}
+
+```r
 imputed.data.meansteps <- imputed.data %>%
 group_by(date) %>%
 summarize(Total = sum(steps))
@@ -125,19 +128,24 @@ summarize(Total = sum(steps))
 g <- ggplot(data = imputed.data.meansteps, aes(Total))
 
 g + geom_histogram(fill = "white", col = "black") + labs(title = "Histogram of the Total Number of Steps Taken Each Day", x = "Steps", y = "Count")
+```
 
+![](PA1_template_files/figure-html/imputedhist-1.png)
+
+```r
 imputed.mean.steps <- round(mean(imputed.data.meansteps$Total))
 imputed.median.steps <- round(median(x = imputed.data.meansteps$Total))
 rm(imputed.data.meansteps)
 ```
 
-After imputing the data, the **mean** number of steps taken each day is **`r imputed.mean.steps`**. The **median** number of steps taken each day is **`r imputed.median.steps`**. These numbers vary only slightly from the non-imputed data, and there is no significant effect from imputing the missing values in the chosen manner. This is because the number of missing values is rather small compared to the entire dataset, and we chose an imputation method that produces predicted values centered around the previous interval means.  
+After imputing the data, the **mean** number of steps taken each day is **10603**. The **median** number of steps taken each day is **10571**. These numbers vary only slightly from the non-imputed data, and there is no significant effect from imputing the missing values in the chosen manner. This is because the number of missing values is rather small compared to the entire dataset, and we chose an imputation method that produces predicted values centered around the previous interval means.  
 
 ******
 ###Are there differences in activity patterns between weekdays and weekends?  
 
 
-```{r weekends}
+
+```r
 imputed.data.weekday <- imputed.data %>%
   mutate(day = as.factor(ifelse(wday(imputed.data$date) == 1 | wday(imputed.data$date) == 7, "weekend", "weekday")))
 
@@ -151,6 +159,8 @@ g + geom_line() +
   facet_grid(day~.) +
   labs(title = "Average Daily Activity Pattern \n Weekend vs. Weekday", x = "Daily 5-minute Interval", y = "Average Steps")
 ```
+
+![](PA1_template_files/figure-html/weekends-1.png)
   
 As evidenced here, there is a distinct difference in the daily activity pattern between weekends and weekdays.  On weekdays, it appears as though people tend to take more steps in the morning (perhaps on their commute to work), but take fewer steps than on the weekends over the rest of the day (perhaps due to being mostly seated at a desk during the work day).  
 
