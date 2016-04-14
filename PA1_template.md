@@ -53,7 +53,7 @@ activity.data.dailypattern <- activity.data %>%
   na.omit() %>%
   group_by(interval) %>%
   summarize(Mean = mean(steps)) %>%
-  mutate(Rank = row_number(interval))
+  mutate(Rank = dense_rank(Mean))
   
   g <- ggplot(data = activity.data.dailypattern, aes(x=interval, y = Mean))
 
@@ -63,6 +63,12 @@ activity.data.dailypattern <- activity.data %>%
 
 ![](PA1_template_files/figure-html/activitypattern-1.png)
 
+```r
+max.interval <- activity.data.dailypattern$interval[which(activity.data.dailypattern$Rank == max(activity.data.dailypattern$Rank))]
+```
+  
+The 5-minute interval, on average across all the days in the dataset, that contains the **maximum** number of steps is interval **835**. 
+  
 ******  
 ###Impute missing values  
   
@@ -83,7 +89,6 @@ To impute the missing values, let's use a linear model with the following predic
 library(broom)
 fitted <- lm(steps ~ as.factor(interval) + weekend, data = activity.data, na.action = na.omit)
 
-
 fitted.df <- tidy(fitted, row.names = F)
 names(fitted.df) = c("interval","estimate","std.error","statistic", "p.value")
 
@@ -98,7 +103,7 @@ activity.data.model <- left_join(x= activity.data.model, y = fitted.df, by = "in
 activity.data.model$estimate <- ifelse(activity.data.model$p.value > 0.10 | is.na(activity.data.model$p.value), 0, activity.data.model$estimate)
 
 activity.data.model <- activity.data.model %>%
-  select(steps, date, interval, Rank, weekend, estimate)
+  select(steps, date, interval, weekend, estimate)
 
 impute.data <-  function(dat) {
   yint <- fitted.df$estimate[1]
